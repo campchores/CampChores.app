@@ -1,0 +1,75 @@
+export const lightColors = {
+  page: '#F5F7FA',
+  white: '#FFFFFF',
+  ink: '#1E293B',
+  muted: '#64748B',
+  line: '#D9E5F0',
+  headerBg: '#1685F8',
+  headerInk: '#FFFFFF',
+  headerMuted: '#D9EDFF',
+  cardBg: '#FFFFFF',
+  fieldBg: '#FFFFFF',
+  chipBg: '#FFFFFF',
+  chipActiveBg: '#1685F8',
+  softBg: '#E6F4FE',
+  successSoft: '#EAF7EC',
+  errorSoft: '#FDECEC',
+  warningSoft: '#FFF7E6',
+  backdrop: 'rgba(2,20,42,0.55)',
+  tabBarBg: '#FFFFFF',
+  primary: '#1685F8',
+  primaryDark: '#0A3D7A',
+  primaryDeep: '#002B5B',
+  primarySoft: '#E6F4FE',
+  cyan: '#00BCD4',
+  success: '#2E7D32',
+  warning: '#B7791F',
+  error: '#C62828',
+};
+
+export const darkColors = {
+  page: '#0B1220',
+  white: '#18213A',
+  ink: '#F1F5F9',
+  muted: '#A3B3C7',
+  line: '#31445D',
+  headerBg: '#0F2A4D',
+  headerInk: '#FFFFFF',
+  headerMuted: '#A8C8EE',
+  cardBg: '#18213A',
+  fieldBg: '#111B2E',
+  chipBg: '#18213A',
+  chipActiveBg: '#3E9BFF',
+  softBg: '#1A2C47',
+  successSoft: '#15321E',
+  errorSoft: '#3A1A1E',
+  warningSoft: '#3B2F14',
+  backdrop: 'rgba(0,0,0,0.7)',
+  tabBarBg: '#111B2E',
+  primary: '#3E9BFF',
+  primaryDark: '#A8C8EE',
+  primaryDeep: '#D7E9FF',
+  primarySoft: '#1A2C47',
+  cyan: '#00BCD4',
+  success: '#5BC472',
+  warning: '#E9B44C',
+  error: '#F27A7A',
+};
+
+export type ThemeColors = typeof lightColors;
+
+export const colors = lightColors;
+export const radius = {
+  small: 12,
+  medium: 18,
+  large: 28,
+  pill: 999,
+} as const;
+
+export const spacing = {
+  xs: 8,
+  sm: 12,
+  md: 16,
+  lg: 24,
+  xl: 32,
+} as const;
