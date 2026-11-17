@@ -102,23 +102,61 @@ export default function ProfileScreen() {
     setShowServiceEditor(true);
   };
 
-  const saveService = async () => {
-    if (!serviceForm.title.trim() || !serviceForm.description.trim() || !serviceForm.details.trim()) {
+
+const saveService = async () => {
+    const title = serviceForm.title.trim();
+    const description = serviceForm.description.trim();
+    const details = serviceForm.details.trim();
+  
+    if (!title || !description || !details) {
       setFormError('Preencha título, descrição e especificações.');
       return;
     }
+  
+    if (title.length < 3 || title.length > 120) {
+      setFormError('O título deve ter entre 3 e 120 caracteres.');
+      return;
+    }
+  
+    if (description.length < 10 || description.length > 500) {
+      setFormError('A descrição deve ter entre 10 e 500 caracteres.');
+      return;
+    }
+  
+    if (details.length < 3 || details.length > 1000) {
+      setFormError('As especificações devem ter entre 3 e 1000 caracteres.');
+      return;
+    }
+  
     try {
       if (editingService) {
-        await updateService(editingService.id, { ...serviceForm, title: serviceForm.title.trim(), description: serviceForm.description.trim(), details: serviceForm.details.trim() });
+        await updateService(editingService.id, {
+          ...serviceForm,
+          title,
+          description,
+          details,
+        });
       } else {
-        await createService({ ...serviceForm, title: serviceForm.title.trim(), description: serviceForm.description.trim(), details: serviceForm.details.trim(), location: user.location || 'Campinas, SP' });
+        await createService({
+          ...serviceForm,
+          title,
+          description,
+          details,
+          location: user.location || 'Campinas, SP',
+        });
       }
+  
       setShowServiceEditor(false);
       setFormError('');
     } catch (saveError) {
-      setFormError(saveError instanceof Error ? saveError.message : 'Não foi possível salvar o serviço.');
+      setFormError(
+        saveError instanceof Error
+          ? saveError.message
+          : 'Não foi possível salvar o serviço.'
+      );
     }
   };
+
 
   const requestDelete = (service: Service) => {
     setServiceToDelete(service);
