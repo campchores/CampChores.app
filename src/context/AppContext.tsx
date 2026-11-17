@@ -299,13 +299,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
       options: { data: { name: details.name, phone: details.phone, location: details.location } },
     });
     if (error) {
-      if (error.message.includes('already registered') || error.message.includes('already exists')) {
+      console.error('Erro no cadastro Supabase:', error.message);
+    
+      if (
+        error.message.includes('already registered') ||
+        error.message.includes('already exists')
+      ) {
         throw new Error('Este e-mail já possui uma conta. Tente entrar.');
       }
+    
       if (error.message.toLowerCase().includes('password')) {
-        throw new Error('Sua senha deve ter pelo menos 6 caracteres.');
+        throw new Error(`Erro relacionado à senha: ${error.message}`);
       }
-      throw new Error('Não foi possível criar a conta. Verifique os dados e tente novamente.');
+    
+      throw new Error(`Não foi possível criar a conta: ${error.message}`);
     }
     if (data.session) {
       await AsyncStorage.setItem(GUEST_KEY, 'false');
