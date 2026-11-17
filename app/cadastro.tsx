@@ -1,4 +1,4 @@
-import { Eye, EyeOff, LockKeyhole, Mail, User, UserPlus } from 'lucide-react-native';
+import { Eye, EyeOff, LockKeyhole, Mail, Phone, User, UserPlus } from 'lucide-react-native';
 import { Link, router } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -13,13 +13,14 @@ export default function RegisterScreen() {
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
   const handleRegister = async () => {
-    if (!name.trim() || !email.trim() || !password) {
+    if (!name.trim() || !email.trim() || !password || !phone.trim()) {
       setError('Preencha todos os campos para criar sua conta.');
       return;
     }
@@ -27,12 +28,16 @@ export default function RegisterScreen() {
       setError('A senha deve ter pelo menos 6 caracteres.');
       return;
     }
+    if (phone.replace(/\D/g, '').length < 10) {
+      setError('Informe um telefone válido com DDD, por exemplo (19) 99999-9999.');
+      return;
+    }
 
     setBusy(true);
     setError('');
 
     try {
-      await signUp(email.trim(), password, name.trim());
+      await signUp({ name: name.trim(), email: email.trim(), phone: phone.trim(), location: 'Campinas, SP', password });
       router.replace('/(tabs)');
     } catch (regError) {
       setError(regError instanceof Error ? regError.message : 'Não foi possível criar a conta.');
@@ -81,6 +86,22 @@ export default function RegisterScreen() {
                   placeholderTextColor={palette.muted}
                   autoCapitalize="none"
                   keyboardType="email-address"
+                  style={[styles.input, { color: palette.ink }]}
+                />
+              </View>
+            </View>
+
+            {/* Campo Telefone */}
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, { color: palette.ink }]}>Telefone</Text>
+              <View style={[styles.inputContainer, { backgroundColor: palette.fieldBg, borderColor: palette.line }]}>
+                <Phone color={palette.muted} size={19} />
+                <TextInput
+                  value={phone}
+                  onChangeText={setPhone}
+                  placeholder="(19) 99999-9999"
+                  placeholderTextColor={palette.muted}
+                  keyboardType="phone-pad"
                   style={[styles.input, { color: palette.ink }]}
                 />
               </View>
