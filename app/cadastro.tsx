@@ -1,69 +1,120 @@
-import { Eye, EyeOff, MapPin, UserRound } from 'lucide-react-native';
-import { router } from 'expo-router';
+import { Eye, EyeOff, LockKeyhole, Mail, User, UserPlus } from 'lucide-react-native';
+import { Link, router } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { CampChoresLogo } from '@/src/components/CampChoresLogo';
-import { FormField, PrimaryButton } from '@/src/components/UI';
+import { PrimaryButton } from '@/src/components/UI';
 import { useApp } from '@/src/context/AppContext';
-import { colors, spacing } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
-export default function SignUpScreen() {
+export default function RegisterScreen() {
   const { signUp } = useApp();
-  const [form, setForm] = useState({ name: '', email: '', phone: '', location: 'Campinas, SP', password: '', confirmPassword: '' });
-  const [accepted, setAccepted] = useState(false);
+  const palette = useTheme();
+
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const update = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value }));
-  const formatPhone = (value: string) => {
-    const digits = value.replace(/\D/g, '').slice(0, 11);
-    if (digits.length <= 2) return digits;
-    if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-  };
+  const handleRegister = async () => {
+    if (!name.trim() || !email.trim() || !password) {
+      setError('Preencha todos os campos para criar sua conta.');
+      return;
+    }
+    if (password.length < 6) {
+      setError('A senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
 
-  const handleSignUp = async () => {
-    if (!form.name || !form.email || !form.phone || !form.password) return setError('Preencha todos os campos obrigatórios.');
-    if (form.password.length < 6) return setError('Sua senha deve ter pelo menos 6 caracteres.');
-    if (form.password !== form.confirmPassword) return setError('As senhas precisam ser iguais.');
-    if (!accepted) return setError('Aceite os termos para continuar.');
     setBusy(true);
     setError('');
+
     try {
-      await signUp({ name: form.name.trim(), email: form.email.trim(), phone: form.phone, location: form.location.trim() || 'Campinas, SP', password: form.password });
+      await signUp(email.trim(), password, name.trim());
       router.replace('/(tabs)');
-    } catch (signUpError) {
-      setError(signUpError instanceof Error ? signUpError.message : 'Não foi possível criar a conta.');
+    } catch (regError) {
+      setError(regError instanceof Error ? regError.message : 'Não foi possível criar a conta.');
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <View style={styles.header}>
-          <Pressable onPress={() => router.back()} style={styles.backButton}><Text style={styles.backText}>‹</Text></Pressable>
-          <CampChoresLogo variant="white" compact />
+    <KeyboardAvoidingView style={[styles.screen, { backgroundColor: palette.primary }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        <View style={styles.hero}>
+          <CampChoresLogo variant="white" />
+          <Text style={styles.heroSubtitle}>Crie sua conta para contratar ou publicar serviços na comunidade.</Text>
         </View>
-        <View style={styles.card}>
-          <Text style={styles.title}>Criar uma conta</Text>
-          <Text style={styles.subtitle}>Preencha os campos corretamente para começar.</Text>
+
+        <View style={[styles.card, { backgroundColor: palette.page }]}>
+          <Text style={[styles.title, { color: palette.primaryDeep }]}>Criar nova conta</Text>
+          <Text style={[styles.subtitle, { color: palette.muted }]}>É rápido, seguro e gratuito.</Text>
+
           <View style={styles.form}>
-            <View style={styles.iconField}><UserRound color={colors.muted} size={18} style={styles.fieldIcon} /><FormField label="Nome completo" placeholder="Como podemos chamar você?" value={form.name} onChangeText={(value) => update('name', value)} style={styles.iconInput} /></View>
-            <FormField label="E-mail" placeholder="voce@email.com" value={form.email} onChangeText={(value) => update('email', value)} keyboardType="email-address" autoCapitalize="none" />
-            <FormField label="Número de telefone" placeholder="(19) 99999-9999" value={form.phone} onChangeText={(value) => update('phone', formatPhone(value))} keyboardType="phone-pad" />
-            <View style={styles.iconField}><MapPin color={colors.muted} size={18} style={styles.fieldIcon} /><FormField label="Cidade e Estado" placeholder="Campinas, SP" value={form.location} onChangeText={(value) => update('location', value)} style={styles.iconInput} /></View>
-            <View style={styles.passwordField}><FormField label="Senha" placeholder="Mínimo de 6 caracteres" value={form.password} onChangeText={(value) => update('password', value)} secureTextEntry={!showPassword} style={styles.passwordInput} /><Pressable onPress={() => setShowPassword((current) => !current)} style={styles.passwordEye}>{showPassword ? <EyeOff color={colors.muted} size={19} /> : <Eye color={colors.muted} size={19} />}</Pressable></View>
-            <View style={styles.passwordField}><FormField label="Confirmar senha" placeholder="Repita sua senha" value={form.confirmPassword} onChangeText={(value) => update('confirmPassword', value)} secureTextEntry={!showPassword} style={styles.passwordInput} /></View>
-            <Pressable style={styles.termsRow} onPress={() => setAccepted((current) => !current)} accessibilityRole="checkbox" accessibilityState={{ checked: accepted }}>
-              <View style={[styles.checkbox, accepted && styles.checkboxChecked]}>{accepted && <Text style={styles.checkmark}>✓</Text>}</View>
-              <Text style={styles.termsText}>Eu concordo com os Termos de Serviço, Diretrizes de Segurança e Política de Privacidade.</Text>
-            </Pressable>
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
-            <PrimaryButton label={busy ? 'Criando conta...' : 'Criar minha conta'} onPress={handleSignUp} disabled={busy} />
-            <Text style={styles.idHint}>Sua Chave Primária CampChores será criada automaticamente, sem CPF.</Text>
+            {/* Campo Nome */}
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, { color: palette.ink }]}>Nome completo</Text>
+              <View style={[styles.inputContainer, { backgroundColor: palette.fieldBg, borderColor: palette.line }]}>
+                <User color={palette.muted} size={19} />
+                <TextInput
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="Seu nome"
+                  placeholderTextColor={palette.muted}
+                  style={[styles.input, { color: palette.ink }]}
+                />
+              </View>
+            </View>
+
+            {/* Campo E-mail */}
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, { color: palette.ink }]}>E-mail</Text>
+              <View style={[styles.inputContainer, { backgroundColor: palette.fieldBg, borderColor: palette.line }]}>
+                <Mail color={palette.muted} size={19} />
+                <TextInput
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="voce@email.com"
+                  placeholderTextColor={palette.muted}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  style={[styles.input, { color: palette.ink }]}
+                />
+              </View>
+            </View>
+
+            {/* Campo Senha */}
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, { color: palette.ink }]}>Senha</Typography>
+              <View style={[styles.inputContainer, { backgroundColor: palette.fieldBg, borderColor: palette.line }]}>
+                <LockKeyhole color={palette.muted} size={19} />
+                <TextInput
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Mínimo 6 caracteres"
+                  placeholderTextColor={palette.muted}
+                  secureTextEntry={!showPassword}
+                  style={[styles.input, { color: palette.ink }]}
+                />
+                <Pressable onPress={() => setShowPassword((prev) => !prev)} hitSlop={10} style={styles.eyeButton}>
+                  {showPassword ? <EyeOff color={palette.muted} size={20} /> : <Eye color={palette.muted} size={20} />}
+                </Pressable>
+              </View>
+            </View>
+
+            {error ? <Text style={[styles.errorText, { color: palette.error }]}>{error}</Text> : null}
+
+            <PrimaryButton label={busy ? 'Criando conta...' : 'Cadastrar'} onPress={handleRegister} disabled={busy} icon={<UserPlus color="#FFFFFF" size={18} />} />
+          </View>
+
+          <View style={styles.loginRow}>
+            <Text style={[styles.loginText, { color: palette.muted }]}>Já possui uma conta?</Text>
+            <Link href="/" asChild>
+              <Pressable><Text style={[styles.loginLink, { color: palette.primary }]}>Entrar</Text></Pressable>
+            </Link>
           </View>
         </View>
       </ScrollView>
@@ -72,26 +123,21 @@ export default function SignUpScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.primary },
-  content: { flexGrow: 1 },
-  header: { paddingHorizontal: spacing.lg, paddingTop: 48, paddingBottom: 28, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  backButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
-  backText: { color: colors.white, fontSize: 32, lineHeight: 34, fontFamily: 'Inter_400Regular' },
-  card: { flex: 1, backgroundColor: colors.page, borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: spacing.lg, paddingTop: 30 },
-  title: { color: colors.primaryDeep, fontFamily: 'Inter_700Bold', fontSize: 26 },
-  subtitle: { color: colors.muted, fontFamily: 'Inter_400Regular', fontSize: 14, marginTop: 6 },
-  form: { gap: 16, marginTop: 22 },
-  iconField: { position: 'relative' },
-  fieldIcon: { position: 'absolute', left: 16, bottom: 17, zIndex: 1 },
-  iconInput: { paddingLeft: 44 },
-  passwordField: { position: 'relative' },
-  passwordInput: { paddingRight: 48 },
-  passwordEye: { position: 'absolute', right: 16, bottom: 16 },
-  termsRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginTop: 2 },
-  checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: colors.line, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
-  checkboxChecked: { backgroundColor: colors.primary, borderColor: colors.primary },
-  checkmark: { color: colors.white, fontFamily: 'Inter_700Bold', fontSize: 15 },
-  termsText: { flex: 1, color: colors.muted, fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 18 },
-  errorText: { color: colors.error, fontFamily: 'Inter_400Regular', fontSize: 13 },
-  idHint: { color: colors.muted, fontFamily: 'Inter_400Regular', fontSize: 11, lineHeight: 17, textAlign: 'center' },
+  screen: { flex: 1 },
+  scrollContent: { flexGrow: 1, paddingBottom: 24 },
+  hero: { minHeight: 220, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, paddingTop: 40, gap: 12 },
+  heroSubtitle: { color: '#FFFFFF', fontFamily: 'Inter_600SemiBold', fontSize: 13, textAlign: 'center', opacity: 0.9, maxWidth: 300 },
+  card: { flex: 1, borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, paddingTop: 30, gap: 16 },
+  title: { fontFamily: 'Inter_700Bold', fontSize: 24 },
+  subtitle: { fontFamily: 'Inter_400Regular', fontSize: 13, lineHeight: 18 },
+  form: { gap: 14, marginTop: 4 },
+  inputGroup: { gap: 6 },
+  inputLabel: { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
+  inputContainer: { height: 52, borderRadius: 12, paddingHorizontal: 15, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1 },
+  input: { flex: 1, height: '100%', fontFamily: 'Inter_400Regular', fontSize: 13 },
+  eyeButton: { padding: 4 },
+  errorText: { fontFamily: 'Inter_400Regular', fontSize: 12, marginTop: 2 },
+  loginRow: { flexDirection: 'row', justifyContent: 'center', gap: 5, marginTop: 12 },
+  loginText: { fontFamily: 'Inter_400Regular', fontSize: 13 },
+  loginLink: { fontFamily: 'Inter_700Bold', fontSize: 13 },
 });
