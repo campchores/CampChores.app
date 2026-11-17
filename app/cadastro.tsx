@@ -88,7 +88,7 @@ export default function RegisterScreen() {
 
             {/* Campo Senha */}
             <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: palette.ink }]}>Senha</Typography>
+              <Text style={[styles.inputLabel, { color: palette.ink }]}>Senha</Text>
               <View style={[styles.inputContainer, { backgroundColor: palette.fieldBg, borderColor: palette.line }]}>
                 <LockKeyhole color={palette.muted} size={19} />
                 <TextInput
