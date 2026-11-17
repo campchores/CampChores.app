@@ -414,21 +414,61 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const updateService = async (serviceId: string, changes: { category: Exclude<ServiceCategory, 'Todos'>; title: string; description: string; details: string }) => {
     if (!user) throw new Error('Entre na sua conta para editar serviços.');
-    const { error } = await supabase.from('services').update(changes).eq('id', serviceId).eq('provider_id', user.id);
+    const current = services.find((service) => service.id === serviceId);
+    const { data, error } = await supabase
+      .from('services')
+      .update(changes)
+      .eq('id', serviceId)
+      .eq('provider_id', user.id)
+      .select('id');
     if (error) throw new Error('Não foi possível atualizar o serviço.');
+    if (!data || data.length === 0) throw new Error('Serviço não encontrado para atualização. Atualize a página e tente novamente.');
+    if (current) {
+      const { error: catalogError } = await supabase
+        .from('service_catalog')
+        .update({ title: changes.title, description: changes.description, category: changes.category })
+        .eq('owner_id', user.id)
+        .eq('title', current.title)
+        .eq('category', current.category);
+      if (catalogError) throw new Error('O serviço foi atualizado, mas não foi possível sincronizar sua vitrine simples. Tente editar novamente.');
+    }
     await loadServices();
   };
 
   const deleteService = async (serviceId: string) => {
     if (!user) throw new Error('Entre na sua conta para excluir serviços.');
-    // Soft delete: contratos antigos referenciam o serviço (histórico preservado),
-    // então nunca apagamos o registro — apenas ocultamos da vitrine.
-    const { error } = await supabase
-      .from('services')
-      .update({ is_active: false })
-      .eq('id', serviceId)
-      .eq('provider_id', user.id);
-    if (error) throw new Error('Não foi possível excluir o serviço. Tente novamente em instantes.');
+    const target = services.find((service) => service.id === serviceId);
+
+    if (target) {
+      // Serviço completo: arquiva o registro em services (contratos e histórico
+      // permanecem preservados) e remove a cópia gêmea da vitrine simples.
+      const { data: archived, error } = await supabase
+        .from('services')
+        .update({ is_active: false })
+        .eq('id', serviceId)
+        .eq('provider_id', user.id)
+        .select('id');
+      if (error) throw new Error('Não foi possível excluir o serviço. Tente novamente em instantes.');
+      if (!archived || archived.length === 0) throw new Error('Serviço não encontrado para exclusão. Atualize a página e tente novamente.');
+
+      const { error: catalogError } = await supabase
+        .from('service_catalog')
+        .delete()
+        .eq('owner_id', user.id)
+        .eq('title', target.title)
+        .eq('category', target.category);
+      if (catalogError) throw new Error('O serviço foi arquivado, mas não foi possível remover sua cópia da vitrine simples.');
+    } else {
+      // Card vindo apenas da vitrine simples: o identificador pertence ao catálogo.
+      const { data: removed, error: catalogError } = await supabase
+        .from('service_catalog')
+        .delete()
+        .eq('id', serviceId)
+        .eq('owner_id', user.id)
+        .select('id');
+      if (catalogError) throw new Error('Não foi possível excluir o serviço. Tente novamente em instantes.');
+      if (!removed || removed.length === 0) throw new Error('Serviço não encontrado para exclusão. Atualize a página e tente novamente.');
+    }
     await loadServices();
   };
 
