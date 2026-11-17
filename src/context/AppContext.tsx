@@ -317,7 +317,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         throw new Error('Não foi possível utilizar essa senha. Escolha outra.');
       }
           
-      throw new Error(`Não foi possível criar a conta: ${error.message}`);
+      throw new Error('Não foi possível criar a conta. Verifique os dados e tente novamente.');
     }
     if (data.session) {
       await AsyncStorage.setItem(GUEST_KEY, 'false');
