@@ -37,10 +37,11 @@ export default function HomeScreen() {
     void Linking.openURL(url);
   };
 
+// 1. Corrigir o redirecionamento de hóspede (substitua '/' pela rota real de login, ex: '/login')
   const registerContract = async (service: Service) => {
     if (isGuest) {
       setSelectedService(null);
-      router.push('/');
+      router.push('/login'); // <-- Altere para a sua rota de login real
       return;
     }
     const created = await createContract(service);
@@ -53,7 +54,7 @@ export default function HomeScreen() {
     if (!reportingService || !reportText.trim()) return;
     if (isGuest) {
       setReportingService(null);
-      router.push('/');
+      router.push('/login'); // <-- Altere para a sua rota de login real
       return;
     }
     await submitReport(reportingService.id, reportText.trim());
