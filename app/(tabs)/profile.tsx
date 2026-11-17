@@ -53,7 +53,12 @@ export default function ProfileScreen() {
       setFormError('Permita o acesso às fotos para alterar sua imagem.');
       return;
     }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.7 });
+    const result = await ImagePicker.launchImageLibraryAsync({ 
+  mediaTypes: ImagePicker.MediaTypeOptions.Images, 
+  allowsEditing: true, 
+  aspect: [1, 1], 
+  quality: 0.7 
+});
     if (result.canceled || !result.assets[0]) return;
     try {
       await uploadAvatar(result.assets[0].uri);
