@@ -421,17 +421,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const deleteService = async (serviceId: string) => {
     if (!user) throw new Error('Entre na sua conta para excluir serviços.');
-    const { error } = await supabase.from('services').delete().eq('id', serviceId).eq('provider_id', user.id);
-    if (error) {
-      // Contratos existentes preservam o histórico e impedem apagar o serviço;
-      // nesse caso arquivamos (oculta da vitrine) em vez de falhar.
-      const { error: archiveError } = await supabase
-        .from('services')
-        .update({ is_active: false })
-        .eq('id', serviceId)
-        .eq('provider_id', user.id);
-      if (archiveError) throw new Error('Não foi possível excluir o serviço. Tente novamente em instantes.');
-    }
+    // Soft delete: contratos antigos referenciam o serviço (histórico preservado),
+    // então nunca apagamos o registro — apenas ocultamos da vitrine.
+    const { error } = await supabase
+      .from('services')
+      .update({ is_active: false })
+      .eq('id', serviceId)
+      .eq('provider_id', user.id);
+    if (error) throw new Error('Não foi possível excluir o serviço. Tente novamente em instantes.');
     await loadServices();
   };
 
