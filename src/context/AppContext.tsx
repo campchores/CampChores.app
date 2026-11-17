@@ -307,11 +307,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       ) {
         throw new Error('Este e-mail já possui uma conta. Tente entrar.');
       }
-    
-      if (error.message.toLowerCase().includes('password')) {
-        throw new Error(`Erro relacionado à senha: ${error.message}`);
+      if (error.code === 'weak_password') {
+        throw new Error(
+          'Essa senha foi identificada como comprometida em vazamentos de dados. Escolha outra senha, de preferência única.'
+        );
       }
-    
+      
+      if (error.message.toLowerCase().includes('password')) {
+        throw new Error('Não foi possível utilizar essa senha. Escolha outra.');
+      }
+          
       throw new Error(`Não foi possível criar a conta: ${error.message}`);
     }
     if (data.session) {
