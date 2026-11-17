@@ -24,6 +24,7 @@ export type Service = {
   id: string;
   providerId: string;
   providerName: string;
+  providerAvatarUrl?: string;
   category: Exclude<ServiceCategory, 'Todos'>;
   title: string;
   description: string;

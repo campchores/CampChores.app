@@ -69,6 +69,12 @@ type ServiceRow = {
   contact_phone: string;
 };
 
+type ProviderProfileRow = {
+  id: string;
+  display_name: string;
+  avatar_url: string;
+};
+
 type ContractRow = {
   id: string;
   service_id: string;
@@ -91,11 +97,12 @@ type CatalogRow = {
   contact_phone: string;
 };
 
-function mapServiceRow(row: ServiceRow, providerName: string, avatarColor: string): Service {
+function mapServiceRow(row: ServiceRow, providerName: string, avatarColor: string, providerAvatarUrl?: string): Service {
   return {
     id: row.id,
     providerId: row.provider_id,
     providerName,
+    providerAvatarUrl: providerAvatarUrl || undefined,
     category: row.category,
     title: row.title,
     description: row.description,
@@ -130,13 +137,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const ownerIds = Array.from(new Set((catalog as CatalogRow[]).map((row) => row.owner_id)));
     const names = new Map<string, string>();
+    const avatars = new Map<string, string>();
     if (ownerIds.length > 0) {
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, display_name')
+        .select('id, display_name, avatar_url')
         .in('id', ownerIds);
-      for (const profile of profiles ?? []) {
-        names.set(profile.id as string, profile.display_name as string);
+      for (const profile of (profiles as ProviderProfileRow[] | null) ?? []) {
+        names.set(profile.id, profile.display_name);
+        if (profile.avatar_url && !profile.avatar_url.startsWith('http')) {
+          const signedUrl = await loadSignedAvatar(profile.avatar_url);
+          if (signedUrl) avatars.set(profile.id, signedUrl);
+        } else if (profile.avatar_url) {
+          avatars.set(profile.id, profile.avatar_url);
+        }
       }
     }
 
@@ -167,12 +181,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
           },
           names.get(row.owner_id) || 'Colaborador CampChores',
           avatarColorFor(row.owner_id),
+          avatars.get(row.owner_id),
         ),
       );
 
     setServices([
       ...structured.map((row) =>
-        mapServiceRow(row, names.get(row.provider_id) || 'Colaborador CampChores', avatarColorFor(row.provider_id)),
+        mapServiceRow(row, names.get(row.provider_id) || 'Colaborador CampChores', avatarColorFor(row.provider_id), avatars.get(row.provider_id)),
       ),
       ...catalogOnly,
     ]);
@@ -279,6 +294,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
 
     return () => authListener.subscription.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const setTheme = (next: ThemeMode) => {
